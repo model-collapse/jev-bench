@@ -8,6 +8,10 @@ One command scores any model with the right metric per question, and works acros
 LLMs (prompted or as option-scorers), cross-encoders/rerankers, embedding models, and your own
 custom systems.
 
+See **[TASKS.md](TASKS.md)** for the full task taxonomy — every task along two dimensions,
+**task type** (Choice / Score / Noul) × **task context** (skill probes, applied operational
+scenarios, real-world), with the context × type matrix.
+
 ```bash
 pip install -r requirements.txt        # install only what your backend needs
 python bench_eval.py --model Qwen/Qwen2.5-1.5B-Instruct --data benchmark.jsonl
@@ -31,7 +35,8 @@ The harness reads a JSONL file (`--data`, default `data/benchmark_release.jsonl`
 ```
 
 Answer space per primitive: **choice** → the option keys; **noul** → `yes`/`no`; **score** → the
-level indices `0..k-1`. The dataset drop (data files + datasheet) will be linked here.
+level indices `0..k-1`. The dataset drop (data files + datasheet) will be linked here. For what the
+2,934 tasks cover, see the taxonomy in **[TASKS.md](TASKS.md)**.
 
 ## Metrics
 
