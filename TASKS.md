@@ -69,6 +69,23 @@ rating within one realistic decision surface.
 77-way intent classification from real customer banking messages (human labels + induced intent
 definitions). A high-cardinality, fine-grained Choice task with genuine human ground truth.
 
+### D. Relevance (information-access) — add-on family, built from third-party IR data
+Relevance prediction cast as typed decisions — the *native* job of cross-encoders / embedding models,
+added so the benchmark is fair across paradigms. Shipped as **builder scripts** ([`relevance/`](relevance/)),
+not committed data, with **separate provenance** (BEIR / MS MARCO; not Apache-clean like the core).
+
+| task | type | source | grounding |
+|---|---|---|---|
+| claim → evidence | Choice (N-way) | BEIR/SciFact | human qrels (gold) |
+| graded relevance | Score (0–2) | BEIR/TREC-COVID | human graded qrels (gold) |
+| binary relevance (in-domain ref) | Score (0–1) | MS MARCO | human qrels (gold) |
+
+The SciFact/TREC-COVID sets are deliberately **out-of-domain** (scientific claims, biomedical) to
+measure **generalization** — cross-encoders lead in-domain but a strong bi-encoder is more robust
+out-of-domain. Single-pair tasks use `relevance/rel_eval.py` (pair-scoring + threshold-free AUC /
+Spearman / QWK); Choice tasks run in the main harness. This family is **not** part of the 2,934-row
+core matrix above.
+
 ---
 
 ## The full matrix (context × type, example counts)

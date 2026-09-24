@@ -8,3 +8,5 @@ transformers
 sentence-transformers
 # OpenAI-compatible API (llm-api):
 openai
+# relevance task builders (relevance/) download source data from HuggingFace:
+datasets

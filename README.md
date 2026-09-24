@@ -12,6 +12,10 @@ See **[TASKS.md](TASKS.md)** for the full task taxonomy — every task along two
 **task type** (Choice / Score / Noul) × **task context** (skill probes, applied operational
 scenarios, real-world), with the context × type matrix.
 
+There is also an add-on **[relevance task family](relevance/)** (relevance prediction as a typed
+decision — the native job of cross-encoders / embedding models), shipped as builder scripts with its
+own provenance since it derives from third-party IR datasets.
+
 ```bash
 pip install -r requirements.txt        # install only what your backend needs
 python bench_eval.py --model Qwen/Qwen2.5-1.5B-Instruct --data benchmark.jsonl
