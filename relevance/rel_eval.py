@@ -13,7 +13,7 @@ using its level as the score.
 
 Backends: cross-enc, embed (pair scorers) ; llm-hf (rates the level) ; random.
 Usage: python scripts/rel_eval.py --backend cross-enc --model cross-encoder/ms-marco-MiniLM-L-6-v2 \
-         --data data/relevance_graded_treccovid.jsonl
+         --data data/relevance/treccovid_graded.jsonl
 """
 from __future__ import annotations
 import argparse, json, math, os, re, sys
@@ -104,7 +104,7 @@ BK = {"cross-enc": CrossEnc, "embed": Embed, "random": Random, "llm-hf": LLM}
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--backend", required=True, choices=list(BK)); ap.add_argument("--model", default="")
-    ap.add_argument("--data", default="data/relevance_graded_treccovid.jsonl"); ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--data", default="data/relevance/treccovid_graded.jsonl"); ap.add_argument("--limit", type=int, default=0)
     a = ap.parse_args()
     rows = [json.loads(l) for l in open(a.data)]
     if a.limit: rows = rows[:a.limit]

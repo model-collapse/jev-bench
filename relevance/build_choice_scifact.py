@@ -7,7 +7,7 @@ decision, and it directly uses relevant/irrelevant pairs.
 Hard negatives: among non-relevant abstracts, pick the one with the highest token overlap with the
 claim (topical distractor), so the decision isn't trivial.
 
-Output: data/relevance_scifact.jsonl in the benchmark schema (type=choice, gold/human labels).
+Output: data/relevance/scifact_choice.jsonl in the benchmark schema (type=choice, gold/human labels).
 Usage: python scripts/build_relevance.py [--n 200] [--neg-pool 60] [--maxlen 600]
 """
 from __future__ import annotations
@@ -27,7 +27,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=200); ap.add_argument("--neg-pool", type=int, default=80)
     ap.add_argument("--k", type=int, default=2, help="candidates per item = 1 positive + (k-1) hard negatives")
-    ap.add_argument("--maxlen", type=int, default=600); ap.add_argument("--out", default="data/relevance_scifact.jsonl")
+    ap.add_argument("--maxlen", type=int, default=600); ap.add_argument("--out", default="data/relevance/scifact_choice.jsonl")
     a = ap.parse_args()
 
     corpus = {r["_id"]: (r["title"] + ". " + r["text"]).strip()

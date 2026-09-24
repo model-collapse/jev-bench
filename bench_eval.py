@@ -26,8 +26,20 @@ Usage examples:
   python scripts/bench_eval.py --backend embed    --model sentence-transformers/all-MiniLM-L6-v2 --tier gold
 """
 from __future__ import annotations
-import argparse, json, os, re, sys
+import argparse, glob, json, os, re, sys
 from collections import Counter, defaultdict
+
+def load_rows(path):
+    """Load one .jsonl file, OR every .jsonl under a directory (recursively). The separate
+    `relevance/` family is skipped in directory mode (it has its own evaluator, rel_eval.py)."""
+    if os.path.isdir(path):
+        files = sorted(f for f in glob.glob(os.path.join(path, "**", "*.jsonl"), recursive=True)
+                       if f"{os.sep}relevance{os.sep}" not in f)
+        rows = []
+        for f in files:
+            rows += [json.loads(l) for l in open(f)]
+        return rows
+    return [json.loads(l) for l in open(path)]
 
 # ----------------------------- data / candidates -----------------------------
 def candidates(row):
@@ -259,7 +271,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--backend", default="auto", choices=list(BACKENDS) + ["auto"])
     ap.add_argument("--model", default="")
-    ap.add_argument("--data", default="data/benchmark_release.jsonl")
+    ap.add_argument("--data", default="data")
     ap.add_argument("--limit", type=int, default=0, help="0 = all")
     ap.add_argument("--tier", default="all", choices=["all", "gold", "silver"])
     ap.add_argument("--types", default="", help="comma list e.g. choice,noul")
@@ -272,7 +284,7 @@ def main():
         backend, why = autodetect(a.model, a.base_url)
         print(f"[auto] detected backend '{backend}' — {why}")
 
-    rows = [json.loads(l) for l in open(a.data)]
+    rows = load_rows(a.data)
     if a.tier != "all": rows = [r for r in rows if r["reliability"] == a.tier]
     if a.types: rows = [r for r in rows if r["type"] in a.types.split(",")]
     if a.limit: rows = rows[:a.limit]

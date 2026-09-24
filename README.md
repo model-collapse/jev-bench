@@ -23,7 +23,7 @@ python bench_eval.py --model Qwen/Qwen2.5-1.5B-Instruct --data benchmark.jsonl
 
 ## Data
 
-The harness reads a JSONL file (`--data`, default `data/benchmark_release.jsonl`). Each row:
+The harness reads the dataset via `--data` (default **`data/`** — a folder of `<topic>/<type>.jsonl` files; you can also pass a single file or one topic folder to evaluate a slice). Each row:
 
 ```json
 {
@@ -39,8 +39,7 @@ The harness reads a JSONL file (`--data`, default `data/benchmark_release.jsonl`
 ```
 
 Answer space per primitive: **choice** → the option keys; **noul** → `yes`/`no`; **score** → the
-level indices `0..k-1`. The dataset drop (data files + datasheet) will be linked here. For what the
-2,934 tasks cover, see the taxonomy in **[TASKS.md](TASKS.md)**.
+level indices `0..k-1`. The dataset lives in **[`data/`](data/)** (see [`data/README.md`](data/README.md) for the file map + datasheet); the taxonomy is in **[TASKS.md](TASKS.md)**.
 
 ## Metrics
 

@@ -21,7 +21,7 @@ def main():
     from datasets import load_dataset
     ap = argparse.ArgumentParser()
     ap.add_argument("--per-grade", type=int, default=90); ap.add_argument("--maxlen", type=int, default=600)
-    ap.add_argument("--out", default="data/relevance_graded_treccovid.jsonl")
+    ap.add_argument("--out", default="data/relevance/treccovid_graded.jsonl")
     a = ap.parse_args()
 
     queries = {r["_id"]: r["text"] for r in load_dataset("BeIR/trec-covid", "queries")["queries"]}

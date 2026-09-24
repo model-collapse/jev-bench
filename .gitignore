@@ -3,4 +3,5 @@ __pycache__/
 *.egg-info/
 .venv/
 results*.json
-data/
+# built on demand from third-party IR data — not committed:
+data/relevance/
