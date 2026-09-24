@@ -1,0 +1,10 @@
+# core (metrics + data)
+numpy
+# --- install only what your backend needs ---
+# HuggingFace causal LM (llm-hf) / option-scorer (score-hf):
+torch
+transformers
+# cross-encoder (cross-enc) / bi-encoder embeddings (embed):
+sentence-transformers
+# OpenAI-compatible API (llm-api):
+openai
