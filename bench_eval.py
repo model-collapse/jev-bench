@@ -105,7 +105,19 @@ def qwk(true, pred, n):
 def report(preds, out=None):
     n = len(preds)
     corr = sum(p["correct"] for p in preds)
+    # guard: a systematically-failing model (bad id, blocked model, scoring bug) yields all-None
+    # predictions that would otherwise masquerade as a real low/0% score. Surface it loudly.
+    invalid = sum(1 for p in preds if p["pred"] is None)
+    errored = sum(1 for p in preds if p.get("errored"))
     print(f"\n{'='*64}\nRESULTS  n={n}  overall exact-accuracy = {100*corr/n:.1f}%")
+    if invalid:
+        rate = 100 * invalid / n
+        print(f"  invalid/unparseable predictions: {invalid}/{n} ({rate:.0f}%)"
+              + (f"  [{errored} were call errors]" if errored else ""))
+        if rate >= 20:
+            print(f"  *** WARNING: {rate:.0f}% of predictions are None — the score is UNRELIABLE. "
+                  "Likely a wrong model id, a blocked/unavailable model, truncated reasoning "
+                  "(raise --gen-tokens), or an extraction bug — NOT a real result. ***")
     # by eval_metric
     ex = [p for p in preds if p["eval_metric"] == "exact"]
     orl = [p for p in preds if p["eval_metric"] == "ordinal"]
@@ -164,7 +176,22 @@ class LLM_HF:
         return extract(self._text(build_prompt(row)), row)
 
 class Score_HF:
-    """Option scorer: length-normalised log P(candidate | context) after the delimiter. No generation."""
+    """Option scorer (no generation): for each candidate, score the answer token(s) the prompt asks
+    for — option key / level number / yes|no — as the continuation after the delimiter, then argmax.
+    The option DESCRIPTIONS are already in the prompt, so scoring the bare key lets the context, not
+    the surface form of the answer, decide. Two corrections are load-bearing:
+
+      * boundary-safe scoring — tokenise the prefix and the (space-prefixed) answer SEPARATELY and
+        concatenate ids; never re-tokenise `prefix + answer`. The delimiter ends in a space and BPE
+        merges that space into the first answer token, so a joint re-tokenisation is NOT a token-
+        prefix of the prefix alone: for short answers ("yes"/"no") the token diff is EMPTY (every
+        candidate scores the same sentinel, so argmax silently returns the first one), and for longer
+        answers the boundary token shifts so the logprobs are read one position out of alignment.
+      * surface-form competition — option keys have very different unigram frequencies, so for
+        `choice` we rank by domain-conditional PMI, logP(ans|context) - logP(ans|delimiter-only),
+        which cancels that prior. For noul/score the answer's own base rate is informative (yes/no
+        priors; ordinal-level frequency), so there we keep the plain length-normalised logprob."""
+    DELIM = "ANSWER:"
     def __init__(self, model, **_):
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -172,21 +199,27 @@ class Score_HF:
         self.tok = AutoTokenizer.from_pretrained(model)
         self.model = AutoModelForCausalLM.from_pretrained(model, torch_dtype=torch.float32); self.model.eval()
     def _logprob(self, prefix, answer):
+        """Return (raw_sum, length_normalised) log P(answer | prefix). Boundary-safe: the answer is
+        tokenised as " " + answer independently of the prefix and their ids concatenated, so the
+        answer tokens are exactly defined and correctly aligned regardless of BPE space-merging."""
         t = self.tok
-        pre = t(prefix, return_tensors="pt").input_ids
-        full = t(prefix + answer, return_tensors="pt").input_ids
+        pre = t(prefix.rstrip(), return_tensors="pt").input_ids
+        ans = t(" " + str(answer).strip(), return_tensors="pt", add_special_tokens=False).input_ids
+        n = ans.shape[1]
+        if n == 0: return -1e9, -1e9
+        full = self.torch.cat([pre, ans], dim=1)
         with self.torch.no_grad():
             logits = self.model(full).logits.log_softmax(-1)
-        ans_ids = full[0, pre.shape[1]:]
-        if len(ans_ids) == 0: return -1e9
-        lp = sum(logits[0, pre.shape[1] + i - 1, tid].item() for i, tid in enumerate(ans_ids))
-        return lp / len(ans_ids)
+        p = pre.shape[1]
+        lp = sum(logits[0, p + i - 1, full[0, p + i]].item() for i in range(n))
+        return lp, lp / n
     def predict(self, row):
-        prefix = build_prompt(row).replace("End with a line: `ANSWER: <value>`.", "ANSWER: ")
+        prefix = build_prompt(row).replace("End with a line: `ANSWER: <value>`.", self.DELIM + " ")
+        choice = (row["type"] == "choice")
         best, bk = -1e18, None
-        for k, txt in candidates(row):
-            ans = k if row["type"] != "score" else k          # score answer = the number
-            s = self._logprob(prefix, ans)
+        for k, _ in candidates(row):
+            raw, norm = self._logprob(prefix, k)
+            s = raw - self._logprob(self.DELIM, k)[0] if choice else norm   # PMI for choice
             if s > best: best, bk = s, k
         return bk
 
@@ -266,6 +299,65 @@ class LLM_API:
         return extract(r.choices[0].message.content, row)
 BACKENDS["llm-api"] = LLM_API
 
+class Jev:
+    """Native typed-decision API (TypeSafe / Jev). Returns the decision directly — no parsing.
+    Key from env TYPESAFE_API_KEY (or JEV_API_KEY); never printed."""
+    URL = "https://api.typesafe.ai/v1/systemone"
+    def __init__(self, model=None, **_):
+        self.key = os.environ.get("TYPESAFE_API_KEY") or os.environ.get("JEV_API_KEY")
+        if not self.key:
+            raise SystemExit("set TYPESAFE_API_KEY in the environment")
+        self.model = model or "jev-latest"
+    def predict(self, row):
+        import urllib.request
+        cands = candidates(row)
+        q = {"type": row["type"], "instructions": row["question"].get("instructions", "")}
+        if row["type"] == "choice":
+            q["criteria"] = {k: v for k, v in cands}
+        elif row["type"] == "score":
+            q["criteria"] = [v for _, v in cands]        # ordered level descriptions
+        body = json.dumps({"state": row["state"], "model": self.model, "questions": {"q": q}}).encode()
+        req = urllib.request.Request(self.URL, data=body, method="POST", headers={
+            "Authorization": f"Bearer {self.key}", "Content-Type": "application/json"})
+        ans = json.load(urllib.request.urlopen(req, timeout=60))["answers"]["q"]
+        if row["type"] == "choice":
+            return str(ans["choice"])
+        if row["type"] == "noul":
+            return "yes" if float(ans["noul"]) >= 0.5 else "no"
+        probs = ans.get("probabilities")                  # score: most-likely level (argmax),
+        if probs:                                         # not round(expected-value "score")
+            return str(max(probs, key=lambda k: probs[k]))
+        return str(int(round(float(ans["score"]))))
+BACKENDS["jev"] = Jev
+
+class Bedrock:
+    """AWS Bedrock generative LLM via the Converse API (prompt -> generate -> extract)."""
+    def __init__(self, model, gen_tokens=1024, **_):
+        import boto3
+        self.c = boto3.client("bedrock-runtime"); self.model = model; self.gt = int(gen_tokens)
+    def _chat(self, prompt):
+        # generous budget: reasoning models (e.g. gpt-oss, gpt-6, opus) spend tokens on a hidden
+        # reasoning channel before the answer; we read only the visible `text` blocks.
+        r = self.c.converse(modelId=self.model,
+                            messages=[{"role": "user", "content": [{"text": prompt}]}],
+                            inferenceConfig={"maxTokens": self.gt})
+        return "".join(b.get("text", "") for b in r["output"]["message"]["content"])
+    def predict(self, row):
+        return extract(self._chat(build_prompt(row)), row)
+BACKENDS["bedrock"] = Bedrock
+
+class NLI:
+    """Zero-shot entailment classifier ('other' paradigm): entailment of each candidate description."""
+    def __init__(self, model, **_):
+        from transformers import pipeline
+        self.p = pipeline("zero-shot-classification", model=model)
+    def predict(self, row):
+        cands = candidates(row)
+        labels = [v for _, v in cands]; keys = [k for k, _ in cands]
+        res = self.p(context(row)[:2000], labels, multi_label=False)
+        return keys[labels.index(res["labels"][0])]
+BACKENDS["nli"] = NLI
+
 # ----------------------------- run --------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
@@ -276,6 +368,7 @@ def main():
     ap.add_argument("--tier", default="all", choices=["all", "gold", "silver"])
     ap.add_argument("--types", default="", help="comma list e.g. choice,noul")
     ap.add_argument("--base-url", default=None); ap.add_argument("--api-key", default=None)
+    ap.add_argument("--gen-tokens", type=int, default=1024)
     ap.add_argument("--out", default="")
     a = ap.parse_args()
 
@@ -290,16 +383,17 @@ def main():
     if a.limit: rows = rows[:a.limit]
     print(f"benchmark: {len(rows)} rows | backend={backend} model={a.model or '-'}")
 
-    runner = BACKENDS[backend](model=a.model, base_url=a.base_url, api_key=a.api_key)
+    runner = BACKENDS[backend](model=a.model, base_url=a.base_url, api_key=a.api_key, gen_tokens=a.gen_tokens)
     preds = []
     for i, r in enumerate(rows):
+        errored = False
         try: pred = runner.predict(r)
-        except Exception as e: pred = None
+        except Exception as e: pred = None; errored = True
         gold = str(r["label"])
         dist = None
         if r["type"] == "score" and pred is not None and str(pred).lstrip("-").isdigit():
             dist = abs(int(pred) - int(gold))
-        preds.append({"id": r["id"], "type": r["type"], "domain": r.get("domain"),
+        preds.append({"id": r["id"], "type": r["type"], "domain": r.get("domain"), "errored": errored,
                       "reliability": r["reliability"], "eval_metric": r["eval_metric"],
                       "gold": gold, "pred": pred, "correct": str(pred) == gold, "distance": dist,
                       "n_levels": len(r["question"].get("levels", [])) or 2})

@@ -5,3 +5,7 @@ __pycache__/
 results*.json
 # built on demand from third-party IR data — not committed:
 data/relevance/
+
+# never commit API keys
+apikey_*
+*.key

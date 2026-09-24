@@ -8,7 +8,7 @@ One command scores any model with the right metric per question, and works acros
 LLMs (prompted or as option-scorers), cross-encoders/rerankers, embedding models, and your own
 custom systems.
 
-See **[TASKS.md](TASKS.md)** for the full task taxonomy — every task along two dimensions,
+See **[LEADERBOARD.md](LEADERBOARD.md)** for the initial model leaderboard, and **[TASKS.md](TASKS.md)** for the full task taxonomy — every task along two dimensions,
 **task type** (Choice / Score / Noul) × **task context** (skill probes, applied operational
 scenarios, real-world), with the context × type matrix.
 
