@@ -94,13 +94,13 @@ def extract(text, row):
 # ----------------------------- metrics ----------------------------------------
 def qwk(true, pred, n):
     import numpy as np
-    if not true: return 0.0
+    if not true: return None
     O = np.zeros((n, n))
     for a, b in zip(true, pred): O[a, b] += 1
     w = np.array([[((i - j) ** 2) / ((n - 1) ** 2 or 1) for j in range(n)] for i in range(n)])
     E = np.outer(O.sum(1), O.sum(0)) / max(O.sum(), 1)
     den = (w * E).sum()
-    return float(1 - (w * O).sum() / den) if den > 0 else 1.0
+    return float(1 - (w * O).sum() / den) if den > 0 else None  # degenerate (no gold variance)
 
 def report(preds, out=None):
     n = len(preds)
@@ -124,16 +124,18 @@ def report(preds, out=None):
     if ex:
         print(f"  [exact metric]   n={len(ex):4}  accuracy={100*sum(p['correct'] for p in ex)/len(ex):.1f}%")
     if orl:
-        # ordinal: QWK + MAE over score rows (group by n_levels)
+        # ordinal: QWK + MAE over score rows. POOLED — one confusion matrix over ALL ordinal rows
+        # (do NOT group by n_levels and average: a tiny same-gold group yields a degenerate den=0
+        # matrix that returns a free QWK=1.0 and inflates the mean).
         mae = sum(p["distance"] for p in orl if p["distance"] is not None) / max(len(orl), 1)
         acc = 100 * sum(p["correct"] for p in orl) / len(orl)
-        by_n = defaultdict(lambda: ([], []))
+        tt, pp = [], []
         for p in orl:
             if p["pred"] is not None and str(p["pred"]).lstrip("-").isdigit():
-                by_n[p["n_levels"]][0].append(int(p["gold"])); by_n[p["n_levels"]][1].append(int(p["pred"]))
-        qwks = [qwk(t, pr, nn) for nn, (t, pr) in by_n.items() if t]
-        qk = sum(qwks) / len(qwks) if qwks else 0.0
-        print(f"  [ordinal metric] n={len(orl):4}  QWK={qk:.3f}  MAE={mae:.2f}  exact={acc:.1f}%")
+                tt.append(int(p["gold"])); pp.append(int(p["pred"]))
+        qk = qwk(tt, pp, max(tt + pp) + 1) if tt else None
+        qs = f"{qk:.3f}" if qk is not None else "n/a (degenerate)"
+        print(f"  [ordinal metric] n={len(orl):4}  QWK={qs}  MAE={mae:.2f}  exact={acc:.1f}%")
     # by type / tier / domain
     def slice_(key):
         g = defaultdict(list)
