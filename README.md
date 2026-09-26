@@ -25,10 +25,8 @@ subjective-`score` subset (single pooled confusion matrix). The top five overall
 quadratic weighting — read it as ordinal-quality *tiers*, not precise scores: gpt-oss/Jev/Opus 5
 (~0.84–0.94) are within noise of each other, GPT-5.5 clearly good, GPT-6 a step below; only
 bge-reranker and option-scoring are significantly below 0 (they mis-order). `score-MAE` is the more
-stable companion and tells the same story.
-`laya-typed-decisions` (67%) is **excluded** for train/test contamination and **Fable 5** is
-unbenchmarkable on this account (data-retention block) — see [LEADERBOARD.md](LEADERBOARD.md) for
-methodology, exclusions, and gotchas.
+stable companion and tells the same story. See [LEADERBOARD.md](LEADERBOARD.md) for full methodology,
+caveats, and excluded models.
 
 ### By task type
 
