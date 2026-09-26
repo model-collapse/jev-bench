@@ -16,11 +16,18 @@ All numbers below are from one uniform re-run on the 232-example gold sample (pe
 | 2 | GPT-6-astra | generative LLM | Bedrock (proprietary) | 89.7 | 96 | 93 | 0.63 | 0.46 |
 | 4 | **Jev** (jev-latest) | native typed-decision API | api.typesafe.ai (proprietary ref) | 88.8 | 94 | 92 | 0.92 | 0.20 |
 | 5 | gpt-oss-20b | generative LLM | **Apache-2.0** | 88.4 | 91 | 94 | 0.94 | 0.15 |
-| 6 | laya (base, zero-shot) | encoder + [MASK] readout | Apache-2.0 | 53.9 | 47 | 72 | 0.21 | 1.24 |
-| 7 | bart-large-mnli | NLI / entailment | MIT | 50.0 | 56 | 48 | 0.07 | 0.83 |
+| 6 | bart-large-mnli | NLI / entailment | MIT | 54.3 | 56 | 60 | 0.07 | 0.83 |
+| 7 | laya (base, zero-shot) | encoder + [MASK] readout | Apache-2.0 | 53.9 | 47 | 72 | 0.21 | 1.24 |
 | 8 | bge-reranker-base | cross-encoder | MIT | 40.9 | 38 | 43 | −0.16 | 1.07 |
-| 9 | option-scoring (Qwen2.5-0.5B, fixed) | option-scoring LLM | Apache-2.0 | 39.2 | 40 | 45 | −0.30 | 1.02 |
-| 10 | all-MiniLM-L6-v2 | bi-encoder embedding | Apache-2.0 | 34.9 | 34 | 44 | −0.07 | 1.61 |
+| 8 | all-MiniLM-L6-v2 | bi-encoder embedding | Apache-2.0 | 40.9 | 34 | 61 | −0.07 | 1.61 |
+| 10 | option-scoring (Qwen2.5-0.5B, fixed) | option-scoring LLM | Apache-2.0 | 39.2 | 40 | 45 | −0.30 | 1.02 |
+
+`noul` for the NLI and bi-encoder backends now uses the paradigm-appropriate mechanism (NLI: true
+entailment premise=state/hypothesis=statement; embedder: statement-vs-negation cosine) — the old
+"score the tokens yes/no" was a harness bug that deflated them (NLI 50.0→54.3; embedder noul 44→61).
+Cross-encoder `noul` and all encoder `score` are left as-is (a reranker's noul "fix" is a degenerate
+yes-bias; `score` is a genuine paradigm mismatch). An encoder-friendly state-only `choice` query would
+lift embed/cross-enc further but the gain is lexical-overlap, not reasoning — not adopted.
 
 The top five overall (~88–91%) are a statistical tie (n=232). **On `score-QWK`, read tiers not exact
 values:** it's a ~46-row metric effectively decided by a 7-item low-severity tail under quadratic

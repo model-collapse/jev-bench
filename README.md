@@ -39,11 +39,19 @@ methodology, exclusions, and gotchas.
 | GPT-6-astra | frontier LLM | 89.7 | 96 | 93 | 0.63 | 0.46 |
 | **Jev** | typed-decision API *(ref)* | 88.8 | 94 | 92 | 0.92 | 0.20 |
 | gpt-oss-20b | open LLM (Apache) | 88.4 | 91 | 94 | 0.94 | 0.15 |
+| bart-mnli | NLI / entailment | 54.3 | 56 | 60 | 0.07 | 0.83 |
 | laya (base, zero-shot) | open encoder | 53.9 | 47 | 72 | 0.21 | 1.24 |
-| bart-mnli | NLI / entailment | 50.0 | 56 | 48 | 0.07 | 0.83 |
 | bge-reranker | cross-encoder | 40.9 | 38 | 43 | −0.16 | 1.07 |
+| all-MiniLM | bi-encoder | 40.9 | 34 | 61 | −0.07 | 1.61 |
 | option-scoring 0.5B | option-scoring LLM | 39.2 | 40 | 45 | −0.30 | 1.02 |
-| all-MiniLM | bi-encoder | 34.9 | 34 | 44 | −0.07 | 1.61 |
+
+**`noul` for the NLI and bi-encoder backends uses the paradigm-appropriate mechanism** (NLI: true
+entailment, premise=state / hypothesis=statement; embedder: statement-vs-negation cosine) — scoring
+the bare tokens "yes"/"no" was a harness bug that deflated them (NLI 50.0→54.3; embedder noul 44→61).
+The cross-encoder `noul` and all `score` for the encoders are left as-is: a reranker's noul "fix" is a
+degenerate yes-bias (≈ always-yes), and `score` is a genuine paradigm mismatch. (An encoder-friendly
+"state-only" `choice` query lifts embed/cross-enc further, but the gain is lexical overlap, not
+reasoning, so it is not adopted.)
 
 ### By topic (accuracy %)
 

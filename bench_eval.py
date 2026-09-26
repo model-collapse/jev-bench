@@ -241,6 +241,14 @@ class Embed:
         self.m = SentenceTransformer(model)
     def predict(self, row):
         from sentence_transformers.util import cos_sim
+        if row["type"] == "noul":
+            # a noul is a truth statement; compare the state's similarity to the statement vs its
+            # negation (scoring the bare tokens "yes"/"no" is degenerate for a similarity model).
+            st = row["state"]; stmt = row["question"].get("instructions", "")
+            se = self.m.encode(st)
+            pos = float(cos_sim(se, self.m.encode(stmt))[0][0])
+            neg = float(cos_sim(se, self.m.encode("It is false that " + stmt))[0][0])
+            return "yes" if pos >= neg else "no"
         cands = candidates(row)
         qe = self.m.encode(context(row))
         ce = self.m.encode([txt for _, txt in cands])
@@ -349,15 +357,30 @@ class Bedrock:
 BACKENDS["bedrock"] = Bedrock
 
 class NLI:
-    """Zero-shot entailment classifier ('other' paradigm): entailment of each candidate description."""
+    """Entailment classifier ('other' paradigm). For `noul` — a self-contained truth statement — it
+    uses TRUE NLI (premise=state, hypothesis=the statement; yes iff P(entail) > P(contra)), the
+    canonical use; scoring the bare tokens 'yes'/'no' is degenerate for an NLI model. For choice/score
+    it ranks candidate descriptions by entailment probability (instruction+state as premise)."""
     def __init__(self, model, **_):
-        from transformers import pipeline
-        self.p = pipeline("zero-shot-classification", model=model)
+        import torch
+        from transformers import AutoModelForSequenceClassification, AutoTokenizer
+        self.torch = torch; self.tok = AutoTokenizer.from_pretrained(model)
+        self.m = AutoModelForSequenceClassification.from_pretrained(model, torch_dtype=torch.float32).eval()
+        lab = {v.lower(): k for k, v in self.m.config.id2label.items()}
+        self.ENT, self.CON = lab["entailment"], lab["contradiction"]
+    def _probs(self, premise, hypothesis):
+        x = self.tok(premise[:2000], hypothesis, return_tensors="pt", truncation=True, max_length=512)
+        with self.torch.no_grad():
+            return self.m(**x).logits.softmax(-1)[0]
     def predict(self, row):
-        cands = candidates(row)
-        labels = [v for _, v in cands]; keys = [k for k, _ in cands]
-        res = self.p(context(row)[:2000], labels, multi_label=False)
-        return keys[labels.index(res["labels"][0])]
+        if row["type"] == "noul":
+            pr = self._probs(row["state"], row["question"].get("instructions", ""))
+            return "yes" if pr[self.ENT] > pr[self.CON] else "no"
+        best, bk = -1, None
+        for k, v in candidates(row):
+            p = self._probs(context(row), f"This example is {v}.")[self.ENT].item()
+            if p > best: best, bk = p, k
+        return bk
 BACKENDS["nli"] = NLI
 
 # ----------------------------- run --------------------------------------------
