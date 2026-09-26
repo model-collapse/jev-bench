@@ -97,6 +97,29 @@ skills (commerce, logic, org, quant) and lead on the harder operational topics, 
 small-encoder paradigms hold up only on the topical ones (support, observability) and collapse on
 multi-hop/arithmetic reasoning (org, logic, agent traces).
 
+### Community reproductions (60-row screening)
+
+There are already hundreds of open Jev reproductions (450+ GitHub repos). Five representative ones,
+screened here (the flagship **laya** is already on the main board). ⚠ **These are on a 60-example
+gold screening subset — indicative only, NOT directly comparable to the 232-row board above.**
+
+| reproduction | approach | overall | choice | noul | score |
+|---|---|--:|--:|--:|--:|
+| ZefanCai/Open-Jev-9B | frozen Qwen3.5-9B + LoRA + scalar typed head + temperature | 85.0 | 95 | 85 | 75 (MAE 0.25) |
+| samatv256/mini-Jev | frozen Qwen3-0.6B + 262K decision head | 48.3 | 70 | 45 | QWK 0.38 |
+| argos1111/modernbert-ja-310m-jev † | ModernBERT-310M encoder | 46.7 | 40 | 45 | QWK ≈0 |
+| com-kotobalabs/open-jev-deberta-v3-large | DeBERTa-v3-large encoder + span head | 45.0 | 50 | 50 | QWK −0.20 |
+| TokenRhythm/NeoHorse-Jev-4B | Qwen3.5-4B hybrid + pointer head | GPU-only ‡ | — | — | — |
+
+† Japanese-trained, evaluated on English (cross-lingual OOD). ‡ real Apache-2.0 repo with a runnable
+recipe, but its `qwen3_5` hybrid backbone needs a GPU stack (transformers 5.17 + flash-linear-attention
++ triton) — not run on this CPU box.
+
+Two takeaways: **Open-Jev-9B is the same architecture as this project's molora-4b target** (frozen Qwen
++ LoRA + scalar typed head + temperature) — its 85% screen (choice 95 / noul 85 / score off-by-≤1) is a
+strong, directly-relevant reference. The small **encoder** repros do intent/sentiment but are ~chance on
+`noul` and zero/negative on `score` (OOD calibration failure); **mini-Jev** is choice-only strong.
+
 ```bash
 pip install -r requirements.txt        # install only what your backend needs
 python bench_eval.py --model Qwen/Qwen2.5-1.5B-Instruct --data benchmark.jsonl
