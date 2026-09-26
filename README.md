@@ -53,6 +53,28 @@ degenerate yes-bias (≈ always-yes), and `score` is a genuine paradigm mismatch
 "state-only" `choice` query lifts embed/cross-enc further, but the gain is lexical overlap, not
 reasoning, so it is not adopted.)
 
+#### Reading `score-QWK` (including negative values)
+
+`score-QWK` is quadratic-weighted kappa on the ordinal `score` predictions, **chance-corrected** — so
+the number tells you where a model sits relative to random guessing, not just how often it's exactly
+right. Read it as bands, not precise scores:
+
+| QWK | meaning |
+|---|---|
+| **1.0** | perfect ordinal agreement |
+| **≈ 0.7–0.95** | genuinely calibrated ordinal judgment (the reasoning models) |
+| **≈ 0** | **no ordinal signal** — the model guesses, or collapses to a near-constant level |
+| **< 0** | **worse than chance** — predictions are *anti-correlated* with truth: the model tends to rank severity **backwards** (e.g. calling the *least*-severe cases *most*-severe) |
+
+So a **negative** score is a stronger, worse verdict than 0: zero means "uninformative," negative
+means "**mis**-informative — you'd do better inverting its predictions." On this board only
+**bge-reranker (−0.16)** and **option-scoring (−0.30)** are *significantly* below 0 (they genuinely
+mis-order); **all-MiniLM's −0.07 is statistically indistinguishable from 0** (read it as "no signal,"
+not "anti-correlated"). Caveats: the ordinal subset is ~46 rows dominated by ~7 low-severity items
+under quadratic weighting, so treat these as tiers and read **`score-MAE`** (average levels-off, more
+stable) alongside; among the strong models the fine ordering is within noise (only {gpt-oss, Opus 5} >
+GPT-6 is significant).
+
 ### By topic (accuracy %)
 
 | topic | Opus 5 | GPT-5.5 | GPT-6 | Jev | gpt-oss-20b | NLI | laya | bge-rerank | all-MiniLM | opt-score-0.5B |
