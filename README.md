@@ -55,22 +55,22 @@ reasoning, so it is not adopted.)
 
 ### By topic (accuracy %)
 
-| topic | Opus 5 | GPT-5.5 | GPT-6 | Jev | gpt-oss-20b | laya | NLI | bge-rerank | opt-score-0.5B | all-MiniLM |
+| topic | Opus 5 | GPT-5.5 | GPT-6 | Jev | gpt-oss-20b | NLI | laya | bge-rerank | all-MiniLM | opt-score-0.5B |
 |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
-| commerce | 100 | 100 | 100 | 100 | 100 | 33 | 25 | 25 | 33 | 25 |
-| logic | 100 | 100 | 100 | 100 | 100 | 75 | 25 | 50 | 58 | 8 |
-| org | 100 | 100 | 100 | 100 | 100 | 8 | 8 | 42 | 50 | 33 |
-| quant | 100 | 100 | 100 | 100 | 100 | 67 | 58 | 42 | 42 | 42 |
-| invoices | 100 | 100 | 100 | 83 | 100 | 58 | 67 | 67 | 33 | 33 |
-| observability | 100 | 100 | 100 | 100 | 100 | 100 | 58 | 42 | 75 | 42 |
-| moderation | 100 | 100 | 100 | 58 | 75 | 75 | 25 | 25 | 42 | 25 |
-| reviews | 100 | 100 | 100 | 100 | 100 | 67 | 67 | 33 | 100 | 17 |
-| support | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 58 | 83 |
-| banking | 100 | 100 | 100 | 75 | 100 | 38 | 62 | 62 | 0 | 75 |
-| customer_service | 85 | 82 | 82 | 76 | 68 | 53 | 41 | 21 | 26 | 41 |
-| invoice_processing | 77 | 81 | 73 | 81 | 92 | 58 | 50 | 42 | 42 | 50 |
-| security_incidents | 84 | 78 | 81 | 88 | 75 | 25 | 72 | 44 | 16 | 28 |
-| agent_trace_observability | 79 | 75 | 79 | 100 | 88 | 46 | 38 | 29 | 29 | 8 |
+| commerce | 100 | 100 | 100 | 100 | 100 | 25 | 33 | 25 | 25 | 33 |
+| logic | 100 | 100 | 100 | 100 | 100 | 50 | 75 | 50 | 100 | 58 |
+| org | 100 | 100 | 100 | 100 | 100 | 8 | 8 | 42 | 33 | 50 |
+| quant | 100 | 100 | 100 | 100 | 100 | 33 | 67 | 42 | 42 | 42 |
+| invoices | 100 | 100 | 100 | 83 | 100 | 33 | 58 | 67 | 33 | 33 |
+| observability | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 42 | 42 | 75 |
+| moderation | 100 | 100 | 100 | 58 | 75 | 25 | 75 | 25 | 25 | 42 |
+| reviews | 100 | 100 | 100 | 100 | 100 | 67 | 67 | 33 | 17 | 100 |
+| support | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 83 | 58 |
+| banking | 100 | 100 | 100 | 75 | 100 | 62 | 38 | 62 | 75 | 0 |
+| customer_service | 85 | 82 | 82 | 76 | 68 | 62 | 53 | 21 | 44 | 26 |
+| invoice_processing | 77 | 81 | 73 | 81 | 92 | 50 | 58 | 42 | 50 | 42 |
+| security_incidents | 84 | 78 | 81 | 88 | 75 | 78 | 25 | 44 | 34 | 16 |
+| agent_trace_observability | 79 | 75 | 79 | 100 | 88 | 38 | 46 | 29 | 8 | 29 |
 
 The topic view shows the paradigm split cleanly: reasoning models saturate the objective/panoramic
 skills (commerce, logic, org, quant) and lead on the harder operational topics, while similarity /
