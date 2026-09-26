@@ -363,24 +363,24 @@ class NLI:
     it ranks candidate descriptions by entailment probability (instruction+state as premise)."""
     def __init__(self, model, **_):
         import torch
-        from transformers import AutoModelForSequenceClassification, AutoTokenizer
-        self.torch = torch; self.tok = AutoTokenizer.from_pretrained(model)
-        self.m = AutoModelForSequenceClassification.from_pretrained(model, torch_dtype=torch.float32).eval()
+        from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
+        self.torch = torch
+        self.p = pipeline("zero-shot-classification", model=model)     # choice/score (already fair)
+        self.tok = AutoTokenizer.from_pretrained(model)                # raw model for noul entailment
+        self.m = self.p.model
         lab = {v.lower(): k for k, v in self.m.config.id2label.items()}
         self.ENT, self.CON = lab["entailment"], lab["contradiction"]
-    def _probs(self, premise, hypothesis):
-        x = self.tok(premise[:2000], hypothesis, return_tensors="pt", truncation=True, max_length=512)
-        with self.torch.no_grad():
-            return self.m(**x).logits.softmax(-1)[0]
     def predict(self, row):
-        if row["type"] == "noul":
-            pr = self._probs(row["state"], row["question"].get("instructions", ""))
+        if row["type"] == "noul":                                      # TRUE entailment, not yes/no
+            x = self.tok(row["state"][:2000], row["question"].get("instructions", ""),
+                         return_tensors="pt", truncation=True, max_length=512)
+            with self.torch.no_grad():
+                pr = self.m(**x).logits.softmax(-1)[0]
             return "yes" if pr[self.ENT] > pr[self.CON] else "no"
-        best, bk = -1, None
-        for k, v in candidates(row):
-            p = self._probs(context(row), f"This example is {v}.")[self.ENT].item()
-            if p > best: best, bk = p, k
-        return bk
+        cands = candidates(row)
+        labels = [v for _, v in cands]; keys = [k for k, _ in cands]
+        res = self.p(context(row)[:2000], labels, multi_label=False)
+        return keys[labels.index(res["labels"][0])]
 BACKENDS["nli"] = NLI
 
 # ----------------------------- run --------------------------------------------
