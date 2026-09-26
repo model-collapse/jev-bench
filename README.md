@@ -97,30 +97,31 @@ skills (commerce, logic, org, quant) and lead on the harder operational topics, 
 small-encoder paradigms hold up only on the topical ones (support, observability) and collapse on
 multi-hop/arithmetic reasoning (org, logic, agent traces).
 
-### Community reproductions (60-row screening)
+### Community reproductions
 
 There are already hundreds of open Jev reproductions (450+ GitHub repos). Five representative ones,
-screened here (the flagship **laya** is already on the main board). ⚠ **These are on a 60-example
-gold screening subset — indicative only, NOT directly comparable to the 232-row board above.**
+benchmarked on the **same 232-row gold set as the board above** (so directly comparable); the flagship
+**laya** is already on the main board. Same metrics: exact-accuracy % for choice/noul, pooled
+`score-QWK` + `score-MAE` for ordinal score.
 
-| reproduction | approach | overall | choice | noul | score |
-|---|---|--:|--:|--:|--:|
-| ZefanCai/Open-Jev-9B | frozen Qwen3.5-9B + LoRA + scalar typed head + temperature | 85.0 | 95 | 85 | 75 (MAE 0.25) |
-| TokenRhythm/NeoHorse-Jev-4B ‡ | Qwen3.5-4B hybrid + pointer head | 81.7 | 95 | 70 | 80 (QWK 0.94) |
-| samatv256/mini-Jev | frozen Qwen3-0.6B + 262K decision head | 48.3 | 70 | 45 | QWK 0.38 |
-| argos1111/modernbert-ja-310m-jev † | ModernBERT-310M encoder | 46.7 | 40 | 45 | QWK ≈0 |
-| com-kotobalabs/open-jev-deberta-v3-large | DeBERTa-v3-large encoder + span head | 45.0 | 50 | 50 | QWK −0.20 |
+| reproduction | approach | overall | choice | noul | score-QWK | score-MAE |
+|---|---|--:|--:|--:|--:|--:|
+| ZefanCai/Open-Jev-9B | frozen Qwen3.5-9B + LoRA + scalar typed head + temperature | 82.3 | 89 | 83 | 0.89 | 0.28 |
+| TokenRhythm/NeoHorse-Jev-4B ‡ | Qwen3.5-4B hybrid + pointer head | 77.6 | 92 | 68 | 0.83 | 0.35 |
+| com-kotobalabs/open-jev-deberta-v3-large | DeBERTa-v3-large encoder + span head | 59.1 | 68 | 65 | 0.06 | 1.10 |
+| argos1111/modernbert-ja-310m-jev † | ModernBERT-310M encoder | 45.3 | 40 | 49 | −0.12 | 1.21 |
+| samatv256/mini-Jev | frozen Qwen3-0.6B + 262K decision head | 42.2 | 41 | 50 | 0.22 | 1.06 |
 
 † Japanese-trained, evaluated on English (cross-lingual OOD). ‡ its `qwen3_5` hybrid backbone needs a
 GPU stack (transformers 5.17 + flash-linear-attention + triton), so it was run on a **SageMaker GPU**
-(A10G) rather than CPU. NeoHorse-4B also ran at **full 232-row scale: 77.6% overall** (choice 92 /
-noul 68 / score-QWK 0.83) — *main-board comparable*, which would place it between the ~88–91% top
-cluster and laya (54).
+(A10G); the others ran on CPU.
 
-Two takeaways: **Open-Jev-9B is the same architecture as this project's molora-4b target** (frozen Qwen
-+ LoRA + scalar typed head + temperature) — its 85% screen (choice 95 / noul 85 / score off-by-≤1) is a
-strong, directly-relevant reference. The small **encoder** repros do intent/sentiment but are ~chance on
-`noul` and zero/negative on `score` (OOD calibration failure); **mini-Jev** is choice-only strong.
+Takeaways: the **frozen-Qwen + LoRA + typed-head** repros lead — **Open-Jev-9B (82.3) is the exact
+molora-4b target architecture** (frozen Qwen + LoRA + scalar head + temperature) and is the reference
+bar; **NeoHorse-4B (77.6)** is close behind at the molora *size*. Both land just under the ~88–91% top
+cluster (frontier LLMs / Jev / gpt-oss) and well above laya (54). The **encoder** repros do
+intent/sentiment (DeBERTa 59) but are ~chance on `noul` and ≈0/negative on `score` (OOD calibration
+failure); **mini-Jev** collapses to 42 on the full set (its 60-row choice was a small-sample fluke).
 
 ```bash
 pip install -r requirements.txt        # install only what your backend needs
