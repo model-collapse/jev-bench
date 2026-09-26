@@ -106,14 +106,16 @@ gold screening subset — indicative only, NOT directly comparable to the 232-ro
 | reproduction | approach | overall | choice | noul | score |
 |---|---|--:|--:|--:|--:|
 | ZefanCai/Open-Jev-9B | frozen Qwen3.5-9B + LoRA + scalar typed head + temperature | 85.0 | 95 | 85 | 75 (MAE 0.25) |
+| TokenRhythm/NeoHorse-Jev-4B ‡ | Qwen3.5-4B hybrid + pointer head | 81.7 | 95 | 70 | 80 (QWK 0.94) |
 | samatv256/mini-Jev | frozen Qwen3-0.6B + 262K decision head | 48.3 | 70 | 45 | QWK 0.38 |
 | argos1111/modernbert-ja-310m-jev † | ModernBERT-310M encoder | 46.7 | 40 | 45 | QWK ≈0 |
 | com-kotobalabs/open-jev-deberta-v3-large | DeBERTa-v3-large encoder + span head | 45.0 | 50 | 50 | QWK −0.20 |
-| TokenRhythm/NeoHorse-Jev-4B | Qwen3.5-4B hybrid + pointer head | GPU-only ‡ | — | — | — |
 
-† Japanese-trained, evaluated on English (cross-lingual OOD). ‡ real Apache-2.0 repo with a runnable
-recipe, but its `qwen3_5` hybrid backbone needs a GPU stack (transformers 5.17 + flash-linear-attention
-+ triton) — not run on this CPU box.
+† Japanese-trained, evaluated on English (cross-lingual OOD). ‡ its `qwen3_5` hybrid backbone needs a
+GPU stack (transformers 5.17 + flash-linear-attention + triton), so it was run on a **SageMaker GPU**
+(A10G) rather than CPU. NeoHorse-4B also ran at **full 232-row scale: 77.6% overall** (choice 92 /
+noul 68 / score-QWK 0.83) — *main-board comparable*, which would place it between the ~88–91% top
+cluster and laya (54).
 
 Two takeaways: **Open-Jev-9B is the same architecture as this project's molora-4b target** (frozen Qwen
 + LoRA + scalar typed head + temperature) — its 85% screen (choice 95 / noul 85 / score off-by-≤1) is a
