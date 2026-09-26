@@ -5,26 +5,31 @@ per primitive: **exact accuracy** for `choice`/`noul`, **QWK** (quadratic-weight
 `score`. This is an *initial* board — treat the top cluster as a statistical tie (n=232, ±~4% CI).
 
 All numbers below are from one uniform re-run on the 232-example gold sample (per-example outputs);
-`overall`/`choice`/`noul`/`score-acc` are exact-accuracy %, `score-QWK` is the ordinal metric
-(noisy on the 48-row ordinal subset). **A per-topic breakdown table is in the repo
-[README](README.md#results).**
+`overall`/`choice`/`noul` are exact-accuracy %. `score-QWK`/`score-MAE` are the ordinal metric on the
+~46-row subjective-`score` subset, **single pooled confusion matrix** (2 five-level rows dropped).
+**A per-topic breakdown table is in the repo [README](README.md#results).**
 
-| # | model | paradigm | access | overall | choice | noul | score-acc | score-QWK |
+| # | model | paradigm | access | overall | choice | noul | score-QWK | score-MAE |
 |---|---|---|---|--:|--:|--:|--:|--:|
-| 1 | Opus 5 | generative LLM | Bedrock (proprietary) | 90.9 | 93 | 95 | 82 | 0.84 |
-| 2 | GPT-5.5 | generative LLM | Bedrock (proprietary) | 89.7 | 93 | 95 | 77 | 0.77 |
-| 2 | GPT-6-astra | generative LLM | Bedrock (proprietary) | 89.7 | 96 | 93 | 77 | 0.64 |
-| 4 | **Jev** (jev-latest) | native typed-decision API | api.typesafe.ai (proprietary ref) | 88.8 | 94 | 92 | 77 | 0.96 |
-| 5 | gpt-oss-20b | generative LLM | **Apache-2.0** | 88.4 | 91 | 94 | 77 | 0.96 |
-| 6 | laya (base, zero-shot) | encoder + [MASK] readout | Apache-2.0 | 53.9 | 47 | 72 | 40 | 0.23 |
-| 7 | bart-large-mnli | NLI / entailment | MIT | 50.0 | 56 | 48 | 45 | 0.53 |
-| 8 | bge-reranker-base | cross-encoder | MIT | 40.9 | 38 | 43 | 43 | −0.14 |
-| 9 | option-scoring (Qwen2.5-0.5B, fixed) | option-scoring LLM | Apache-2.0 | 39.2 | 40 | 45 | 30 | −0.15 |
-| 10 | all-MiniLM-L6-v2 | bi-encoder embedding | Apache-2.0 | 34.9 | 34 | 44 | 23 | −0.10 |
+| 1 | Opus 5 | generative LLM | Bedrock (proprietary) | 90.9 | 93 | 95 | 0.84 | 0.28 |
+| 2 | GPT-5.5 | generative LLM | Bedrock (proprietary) | 89.7 | 93 | 95 | 0.77 | 0.39 |
+| 2 | GPT-6-astra | generative LLM | Bedrock (proprietary) | 89.7 | 96 | 93 | 0.63 | 0.46 |
+| 4 | **Jev** (jev-latest) | native typed-decision API | api.typesafe.ai (proprietary ref) | 88.8 | 94 | 92 | 0.92 | 0.20 |
+| 5 | gpt-oss-20b | generative LLM | **Apache-2.0** | 88.4 | 91 | 94 | 0.94 | 0.15 |
+| 6 | laya (base, zero-shot) | encoder + [MASK] readout | Apache-2.0 | 53.9 | 47 | 72 | 0.21 | 1.24 |
+| 7 | bart-large-mnli | NLI / entailment | MIT | 50.0 | 56 | 48 | 0.07 | 0.83 |
+| 8 | bge-reranker-base | cross-encoder | MIT | 40.9 | 38 | 43 | −0.16 | 1.07 |
+| 9 | option-scoring (Qwen2.5-0.5B, fixed) | option-scoring LLM | Apache-2.0 | 39.2 | 40 | 45 | −0.30 | 1.02 |
+| 10 | all-MiniLM-L6-v2 | bi-encoder embedding | Apache-2.0 | 34.9 | 34 | 44 | −0.07 | 1.61 |
 
-The top five (~88–91%) are a statistical tie (n=232). **Option-scoring scales with model size:** the
-0.5B row is a base-model floor; Qwen2.5-1.5B-Instruct via the same path reaches ~55% (60-row subset),
-so the paradigm tracks capability and the molora 4B target should land higher.
+The top five overall (~88–91%) are a statistical tie (n=232). **On `score-QWK`, read tiers not exact
+values:** it's a ~46-row metric effectively decided by a 7-item low-severity tail under quadratic
+weighting, so gpt-oss/Jev/Opus 5 (~0.84–0.94) are within noise of each other (only {gpt-oss, Opus 5} >
+GPT-6 is significant by paired bootstrap); `score-MAE` is the more stable companion. Small/similarity
+models land at ~0 or negative because they aren't ordinal judges — they collapse to a near-constant
+level or call the least-severe cases most-severe; only bge-reranker and option-scoring are
+significantly below 0. **Option-scoring scales with model size:** the 0.5B row is a base-model floor;
+Qwen2.5-1.5B-Instruct via the same path reaches ~55% overall (60-row subset).
 
 **Excluded:**
 - **laya-typed-decisions (67.2%)** — *train/test contamination*: its model card states it was fine-tuned

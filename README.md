@@ -19,26 +19,31 @@ own provenance since it derives from third-party IR datasets.
 ## Results
 
 Initial leaderboard on a **232-example gold sample** (`reliability == "gold"`). `overall`/`choice`/
-`noul` and `score-acc` are exact-accuracy %; **`score-QWK`** is the ordinal metric (quadratic-weighted
-kappa; noisy on the 48-row ordinal subset). The top five (~88–91%) are a **statistical tie** (n=232).
+`noul` are exact-accuracy %; **`score-QWK`**/`score-MAE` are the ordinal metric on the ~46-row
+subjective-`score` subset (single pooled confusion matrix). The top five overall (~88–91%) are a
+**statistical tie** (n=232), and `score-QWK` there is effectively a **7-item-tail test** under
+quadratic weighting — read it as ordinal-quality *tiers*, not precise scores: gpt-oss/Jev/Opus 5
+(~0.84–0.94) are within noise of each other, GPT-5.5 clearly good, GPT-6 a step below; only
+bge-reranker and option-scoring are significantly below 0 (they mis-order). `score-MAE` is the more
+stable companion and tells the same story.
 `laya-typed-decisions` (67%) is **excluded** for train/test contamination and **Fable 5** is
 unbenchmarkable on this account (data-retention block) — see [LEADERBOARD.md](LEADERBOARD.md) for
 methodology, exclusions, and gotchas.
 
 ### By task type
 
-| model | paradigm | overall | choice | noul | score-acc | score-QWK |
+| model | paradigm | overall | choice | noul | score-QWK | score-MAE |
 |---|---|--:|--:|--:|--:|--:|
-| Opus 5 | frontier LLM | 90.9 | 93 | 95 | 82 | 0.84 |
-| GPT-5.5 | frontier LLM | 89.7 | 93 | 95 | 77 | 0.77 |
-| GPT-6-astra | frontier LLM | 89.7 | 96 | 93 | 77 | 0.64 |
-| **Jev** | typed-decision API *(ref)* | 88.8 | 94 | 92 | 77 | 0.96 |
-| gpt-oss-20b | open LLM (Apache) | 88.4 | 91 | 94 | 77 | 0.96 |
-| laya (base, zero-shot) | open encoder | 53.9 | 47 | 72 | 40 | 0.23 |
-| bart-mnli | NLI / entailment | 50.0 | 56 | 48 | 45 | 0.53 |
-| bge-reranker | cross-encoder | 40.9 | 38 | 43 | 43 | −0.14 |
-| option-scoring 0.5B | option-scoring LLM | 39.2 | 40 | 45 | 30 | −0.15 |
-| all-MiniLM | bi-encoder | 34.9 | 34 | 44 | 23 | −0.10 |
+| Opus 5 | frontier LLM | 90.9 | 93 | 95 | 0.84 | 0.28 |
+| GPT-5.5 | frontier LLM | 89.7 | 93 | 95 | 0.77 | 0.39 |
+| GPT-6-astra | frontier LLM | 89.7 | 96 | 93 | 0.63 | 0.46 |
+| **Jev** | typed-decision API *(ref)* | 88.8 | 94 | 92 | 0.92 | 0.20 |
+| gpt-oss-20b | open LLM (Apache) | 88.4 | 91 | 94 | 0.94 | 0.15 |
+| laya (base, zero-shot) | open encoder | 53.9 | 47 | 72 | 0.21 | 1.24 |
+| bart-mnli | NLI / entailment | 50.0 | 56 | 48 | 0.07 | 0.83 |
+| bge-reranker | cross-encoder | 40.9 | 38 | 43 | −0.16 | 1.07 |
+| option-scoring 0.5B | option-scoring LLM | 39.2 | 40 | 45 | −0.30 | 1.02 |
+| all-MiniLM | bi-encoder | 34.9 | 34 | 44 | −0.07 | 1.61 |
 
 ### By topic (accuracy %)
 
